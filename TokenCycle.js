@@ -1,8 +1,8 @@
 import { createToken } from './TokenCreation.js';
 import { sellToken } from './SellDev.js';
 
-const WAIT_TIME_MS = 10000; // 1 minute in milliseconds
-const CYCLES = 1; // Number of tokens to create and sell
+const WAIT_TIME_MS = 120000; // 1 minute in milliseconds
+const CYCLES = 30; // Number of tokens to create and sell
 
 async function cycleTokens() {
     for (let i = 0; i < CYCLES; i++) {

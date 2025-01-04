@@ -3,6 +3,7 @@ import bs58 from 'bs58';
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
 import { getAssociatedTokenAddress, getAccount } from '@solana/spl-token';
+import { getMint } from '@solana/spl-token';
 
 dotenv.config();
 
@@ -18,31 +19,33 @@ const web3Connection = new Connection(RPC_ENDPOINT, 'confirmed');
 export async function sellToken(mintAddress) {
     const signerKeyPair = Keypair.fromSecretKey(bs58.decode(PRIVATE_KEY));
 
-    // Derive the associated token address for the wallet and mint
     const tokenAccount = await getAssociatedTokenAddress(
         new PublicKey(mintAddress),
         signerKeyPair.publicKey
     );
 
-    // Fetch the account information to get the token balance
-    let accountInfo;
+    let accountInfo, mintInfo;
     try {
         accountInfo = await getAccount(web3Connection, tokenAccount);
+        mintInfo = await getMint(web3Connection, new PublicKey(mintAddress));
     } catch (err) {
-        console.error("Failed to fetch token account info:", err);
+        console.error("Failed to fetch token account or mint info:", err);
         return;
     }
 
-    const tokenBalance = accountInfo.amount; // Balance in smallest units (e.g., lamports for SOL)
+    const tokenBalance = accountInfo.amount;
+    const decimals = mintInfo.decimals;
 
-    if (tokenBalance <= 0) {
+    if (tokenBalance <= 0n) {
         console.error("No tokens available to sell.");
         return;
     }
 
-    console.log(`Selling ${tokenBalance} units of token with mint address ${mintAddress}`);
+    // Convert balance to human-readable format and round to nearest whole number
+    const amountToSell = (Number(tokenBalance) / 10 ** decimals).toFixed(0);
 
-    // Sell transaction
+    console.log(`Selling ${amountToSell} tokens with mint address ${mintAddress}`);
+
     const response = await fetch("https://pumpportal.fun/api/trade-local", {
         method: "POST",
         headers: {
@@ -52,8 +55,8 @@ export async function sellToken(mintAddress) {
             publicKey: signerKeyPair.publicKey.toBase58(),
             action: "sell",
             mint: mintAddress,
-            amount: tokenBalance, // Use the entire available balance
-            denominatedInSol: "true",
+            amount: amountToSell, // Ensure this is a valid integer
+            denominatedInSol: "false",
             slippage: 10,
             priorityFee: 0.0005,
             pool: "pump",
