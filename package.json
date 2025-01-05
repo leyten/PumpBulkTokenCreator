@@ -6,6 +6,7 @@
     "bs58": "^6.0.0",
     "dotenv": "^16.4.7",
     "form-data": "^4.0.1",
+    "formdata-node": "^6.0.3",
     "fs": "^0.0.1-security",
     "node-fetch": "^3.3.2"
   }
